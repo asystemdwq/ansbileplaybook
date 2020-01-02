@@ -1,0 +1,669 @@
+
+!
+! Last configuration change at 09:40:59 MESZ Fri Aug 2 2019 by cn0wnq
+! NVRAM config last updated at 11:42:43 MESZ Thu Aug 1 2019 by sftt
+!
+version 16.9
+no service pad
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime localtime
+service timestamps log datetime localtime
+service password-encryption
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+!
+hostname ncnrr602
+!
+boot-start-marker
+boot system flash bootflash:isr4300-universalk9.16.09.02.SPA.bin
+boot system flash bootflash:isr4300-universalk9.03.16.04b.S.155-3.S4b-ext.SPA.bin
+boot-end-marker
+!
+!
+vrf definition INET
+ !
+ address-family ipv4
+ exit-address-family
+!
+vrf definition Mgmt-intf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+logging buffered 80920
+enable secret 5 $1$o1pi$kyGruFDq/iSr8BmQqUZjZ0
+!
+aaa new-model
+!
+!
+aaa group server tacacs+ ACS5
+ server name NDEACS01
+ server name NDEACS02
+!
+aaa authentication banner 
+********************************************************************************
+* WARNING !!!!!                                                                *
+* This system is solely for the use of authorized users for official purpose.  *
+* You have no expectation of of privacy in its use and to ensure that the      *
+* system is functioning properly, individuals using this computer system are   *
+* subject to having all of their activities monitored and recorded by system   *
+* personnel. Use of this system evidences an express consent to such monitoring*
+* and agreement that if such monitoring reveals evidences of possible abuse or *
+* criminal activity, system personnel may provide the results of such          *
+* monitoring to appropriate officials.                                         *
+*                                                                              *
+*                                                                              *
+********************************************************************************
+
+aaa authentication password-prompt "Line Password : "
+aaa authentication username-prompt "Locale User : "
+aaa authentication login default local none
+aaa authentication login linecon group tacacs+ line
+aaa authentication login linevty group tacacs+ line
+aaa authentication login lineaux group tacacs+ line
+aaa authentication enable default group tacacs+ enable
+aaa authorization console
+aaa authorization config-commands
+aaa authorization exec default group tacacs+ none 
+aaa authorization commands 1 default group tacacs+ none 
+aaa authorization commands 15 default group tacacs+ none 
+aaa accounting commands 15 default start-stop group tacacs+
+!
+!
+!
+!
+!
+!
+aaa session-id common
+clock timezone MEZ 1 0
+clock summer-time MESZ recurring last Sun Mar 2:00 last Sun Oct 2:00
+clock calendar-valid
+no ip source-route
+!
+!
+!
+!
+!
+!
+!
+no ip bootp server
+ip name-server 10.24.14.100
+ip domain name cn.festo.net
+!
+!
+!
+login on-failure log
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+multilink bundle-name authenticated
+!
+flow exporter FESTO-FLOW-EXPORTER
+ description Festo Standard Exporter
+ destination 10.24.2.17
+ source GigabitEthernet0/0/0
+ transport udp 2055
+!
+!
+flow monitor FESTO-FLOW-MONITOR
+ exporter FESTO-FLOW-EXPORTER
+ cache timeout inactive 16
+ cache timeout active 60
+ record netflow ipv4 original-input
+!
+!
+!
+!
+!
+!
+!
+license udi pid ISR4331/K9 sn FDO223928T4
+license boot suite FoundationSuiteK9
+no license smart enable
+!
+ucse subslot 1/0
+ imc access-port shared-lom console
+ imc ip address 172.21.127.50 255.255.255.0 default-gateway 172.21.127.1 
+!
+diagnostic bootup level minimal
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+archive
+ log config
+  logging enable
+!
+errdisable recovery cause bpduguard
+errdisable recovery cause dtp-flap
+errdisable recovery cause link-flap
+!
+!
+username pi4config privilege 15 password 7 0729334D4013105D4F53593C2D
+username migration privilege 15 password 7 045602011D2058470617
+username cscworks privilege 15 secret 5 $1$1jZw$7gGnPtjhIktS75YP0/A2L0
+!
+redundancy
+ mode none
+!
+!
+!
+crypto ikev2 keyring KEYRING-INET
+ peer INET
+  address 0.0.0.0 0.0.0.0
+  identity address 0.0.0.0
+  pre-shared-key local DVPN_FESTO_INET
+  pre-shared-key remote DVPN_FESTO_INET
+ !
+!
+!
+crypto ikev2 profile INET
+ match fvrf any
+ match identity remote address 0.0.0.0 
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local KEYRING-INET
+!
+crypto ikev2 dpd 40 5 on-demand
+!
+!
+!
+lldp run
+!
+!
+class-map match-any CLASS_VOIP_OUT
+ match dscp ef 
+class-map match-any CLASS_FMC_IN
+ match access-group name QOS_FMC
+class-map type appnav match-any RTSP
+ match access-group name APPNAV-ACL-RTSP
+class-map match-any CLASS_BULK_OUT
+ match dscp af11 
+class-map type appnav match-any MAPI
+ match protocol mapi
+class-map match-any CLASS_VIDEO_IN
+ match access-group name QOS_VIDEO
+ match access-group name QOS_VIDEO_LOCAL
+class-map type appnav match-any HTTP
+ match access-group name APPNAV-ACL-HTTP
+class-map type appnav match-any APPNAV-class-default
+ match access-group name APPNAV-ACL-class-default
+class-map type appnav match-any CIFS
+ match access-group name APPNAV-ACL-CIFS
+class-map type appnav match-any Citrix-CGP
+ match access-group name APPNAV-ACL-Citrix-CGP
+class-map match-any CLASS_FMC_OUT
+ match dscp af31 
+class-map match-any CLASS_VOIP_IN
+ match access-group name QOS_VOIP
+ match access-group name QOS_VOIP_LOCAL
+class-map type appnav match-any HTTPS
+ match access-group name APPNAV-ACL-HTTPS
+class-map match-any CLASS_VIDEO_OUT
+ match dscp af41 
+class-map match-any CLASS_BULK_IN
+ match access-group name QOS_EXCHANGE
+ match access-group name QOS_OUTLOOK
+ match access-group name QOS_CTERA
+class-map type appnav match-any Citrix-ICA
+ match access-group name APPNAV-ACL-Citrix-ICA
+class-map type appnav match-any NFS
+ match access-group name APPNAV-ACL-NFS
+class-map type appnav match-any epmap
+ match access-group name APPNAV-ACL-epmap
+!
+policy-map Festo_QOS_Policy_OUT
+ class CLASS_VOIP_OUT
+  priority percent 25
+ class CLASS_VIDEO_OUT
+  bandwidth percent 20 
+  shape average percent 20   
+ class CLASS_FMC_OUT
+  bandwidth percent 20 
+ class CLASS_BULK_OUT
+  shape average percent 50   
+  bandwidth percent 30 
+ class class-default
+  fair-queue
+  queue-limit 8192 packets
+policy-map Tunnel_Festo_QOS_Policy_OUT
+ class class-default
+  shape average percent 100   
+   service-policy Festo_QOS_Policy_OUT
+policy-map type appnav APPNAV_POLICY_MAP
+ class MAPI
+  distribute service-node-group APPNAV_WNG
+  monitor-load mapi
+ class HTTPS
+  distribute service-node-group APPNAV_WNG
+  monitor-load ssl
+ class HTTP
+  distribute service-node-group APPNAV_WNG
+  monitor-load http
+ class CIFS
+  distribute service-node-group APPNAV_WNG
+  monitor-load cifs
+ class Citrix-ICA
+  distribute service-node-group APPNAV_WNG
+  monitor-load ica
+ class Citrix-CGP
+  distribute service-node-group APPNAV_WNG
+  monitor-load ica
+ class epmap
+  distribute service-node-group APPNAV_WNG
+  monitor-load MS-port-mapper
+ class NFS
+  distribute service-node-group APPNAV_WNG
+  monitor-load nfs
+ class RTSP
+  pass-through
+ class APPNAV-class-default
+  distribute service-node-group APPNAV_WNG
+policy-map Festo_QOS_Policy_IN
+ class CLASS_VOIP_IN
+  set dscp ef
+ class CLASS_VIDEO_IN
+  set dscp af41
+ class CLASS_FMC_IN
+  set dscp af31
+ class CLASS_BULK_IN
+  set dscp af11
+ class class-default
+  set dscp default
+!
+! 
+!
+!
+!
+!
+!
+crypto ipsec transform-set GRE_DVPN_AES_TRANSPORT esp-aes 256 esp-sha-hmac 
+ mode transport
+crypto ipsec transform-set DMVPN_AES esp-aes 256 esp-sha-hmac 
+ mode transport
+!
+crypto ipsec profile IPSEC-FESTO-CN_Suncun
+ set transform-set GRE_DVPN_AES_TRANSPORT 
+ set ikev2-profile INET
+!
+crypto ipsec profile IPSEC-INET
+ set transform-set DMVPN_AES 
+ set ikev2-profile INET
+!
+!
+!
+!
+!
+!
+!
+service-insertion service-node-group APPNAV_WNG
+ service-node 172.21.101.5
+! 
+service-insertion appnav-controller-group APPNAV_SCG
+ appnav-controller 172.21.101.1
+ appnav-controller 172.21.101.2
+! 
+service-insertion service-context waas/1
+ appnav-controller-group APPNAV_SCG
+ service-node-group APPNAV_WNG
+ service-policy APPNAV_POLICY_MAP
+ vrf default
+ enable
+! 
+! 
+!
+!
+interface Tunnel58
+ description CN_Suncun_GPC-CN via GRE/IPSec (Backup)
+ bandwidth 100000
+ bandwidth qos-reference 90000
+ ip flow monitor FESTO-FLOW-MONITOR input
+ ip flow monitor FESTO-FLOW-MONITOR output
+ ip address 172.16.157.218 255.255.255.252
+ ip mtu 1400
+ ip summary-address eigrp 10 172.21.96.0 255.255.224.0
+ delay 95000
+ cdp enable
+ tunnel source GigabitEthernet0/0/1
+ tunnel destination 210.13.68.206
+ tunnel vrf INET
+ tunnel protection ipsec profile IPSEC-FESTO-CN_Suncun
+ service-insertion waas
+ service-policy output Tunnel_Festo_QOS_Policy_OUT
+!
+interface Tunnel62
+ description CN_Suncun_GPC_CT-CN_Jinan_GPC_CU via GRE/IPSec
+ bandwidth 100000
+ bandwidth qos-reference 90000
+ ip flow monitor FESTO-FLOW-MONITOR input
+ ip flow monitor FESTO-FLOW-MONITOR output
+ ip address 172.19.30.105 255.255.255.252
+ ip mtu 1400
+ ip summary-address eigrp 10 172.21.96.0 255.255.224.0
+ delay 800000
+ cdp enable
+ tunnel source GigabitEthernet0/0/1
+ tunnel destination 123.232.6.254
+ tunnel vrf INET
+ tunnel protection ipsec profile IPSEC-FESTO-CN_Suncun
+ service-insertion waas
+ service-policy output Tunnel_Festo_QOS_Policy_OUT
+!
+interface Tunnel102
+ description CN_Suncun_GPC-DE_DC via GRE/IPSec (INET-B)
+ bandwidth 5000
+ ip flow monitor FESTO-FLOW-MONITOR input
+ ip flow monitor FESTO-FLOW-MONITOR output
+ ip address 10.10.106.88 255.255.254.0
+ no ip redirects
+ ip mtu 1400
+ ip nhrp authentication INET-B
+ ip nhrp network-id 102
+ ip nhrp nhs 10.10.106.1 nbma 141.130.50.11 multicast
+ ip summary-address eigrp 10 172.21.96.0 255.255.224.0
+ ip tcp adjust-mss 1360
+ cdp enable
+ if-state nhrp
+ tunnel source GigabitEthernet0/0/1
+ tunnel mode gre multipoint
+ tunnel key 102
+ tunnel vrf INET
+ tunnel protection ipsec profile IPSEC-INET shared
+ service-insertion waas
+!
+interface GigabitEthernet0/0/0
+ description CN_Suncun_GPC Private-Interface
+ ip flow monitor FESTO-FLOW-MONITOR input
+ ip flow monitor FESTO-FLOW-MONITOR output
+ ip address 172.21.127.1 255.255.255.0
+ negotiation auto
+ service-policy input Festo_QOS_Policy_IN
+!
+interface GigabitEthernet0/0/1
+ description CN_Suncun_GPC Public-Interface (ISP China Telecom) (INET:180015495)
+ vrf forwarding INET
+ ip flow monitor FESTO-FLOW-MONITOR input
+ ip flow monitor FESTO-FLOW-MONITOR output
+ ip address 123.168.0.202 255.255.255.252
+ ip mtu 1400
+ ip access-group ONLY_VPN in
+ load-interval 30
+ negotiation auto
+!
+interface GigabitEthernet0/0/2
+ description CN_Suncun_GPC WAN-Acceleration
+ ip flow monitor FESTO-FLOW-MONITOR input
+ ip flow monitor FESTO-FLOW-MONITOR output
+ ip address 172.21.101.2 255.255.255.240
+ negotiation auto
+!
+interface ucse1/0/0
+ ip unnumbered GigabitEthernet0/0/0
+ no negotiation auto
+ switchport mode trunk
+ no mop enabled
+ no mop sysid
+!
+interface ucse1/0/1
+ no ip address
+ no negotiation auto
+ switchport mode trunk
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ no ip address
+ negotiation auto
+!
+interface AppNav-Compress1
+ ip unnumbered GigabitEthernet0/0/2
+ no keepalive
+!
+interface AppNav-UnCompress1
+ ip unnumbered GigabitEthernet0/0/2
+ no keepalive
+!
+!
+router eigrp 10
+ distribute-list 10 out Tunnel62
+ distribute-list 10 out Tunnel58
+ distribute-list 10 out Tunnel102
+ network 10.10.106.88 0.0.0.0
+ network 172.16.157.216 0.0.0.3
+ network 172.19.30.104 0.0.0.3
+ network 172.21.127.0 0.0.0.255
+ offset-list 0 out 99999999 Tunnel102 
+ offset-list 0 in 99999999 Tunnel102 
+!
+ip forward-protocol nd
+ip ftp username cscworks
+ip ftp password 7 082A495C071C1745
+no ip http server
+no ip http secure-server
+ip tftp source-interface GigabitEthernet0/0/0
+ip route 172.21.127.50 255.255.255.255 ucse1/0/0 name ncnri602
+ip route 172.21.127.51 255.255.255.255 ucse1/0/0 name ncnru602
+ip route vrf INET 0.0.0.0 0.0.0.0 123.168.0.201
+ip route vrf INET 141.130.250.10 255.255.255.255 123.168.0.201
+ip tacacs source-interface GigabitEthernet0/0/0 
+!
+ip ssh time-out 60
+ip ssh authentication-retries 2
+ip ssh version 2
+ip scp server enable
+!
+!
+ip access-list extended APPNAV-ACL-CIFS
+ permit tcp any any eq 139
+ permit tcp any any eq 445
+ip access-list extended APPNAV-ACL-Citrix-CGP
+ permit tcp any any eq 2598
+ip access-list extended APPNAV-ACL-Citrix-ICA
+ permit tcp any any eq 1494
+ip access-list extended APPNAV-ACL-HTTP
+ permit tcp any any eq www
+ permit tcp any any eq 3128
+ permit tcp any any eq 8000
+ permit tcp any any eq 8080
+ permit tcp any any eq 8088
+ip access-list extended APPNAV-ACL-HTTPS
+ permit tcp any any eq 443
+ip access-list extended APPNAV-ACL-NFS
+ permit tcp any any eq 2049
+ip access-list extended APPNAV-ACL-RTSP
+ permit tcp any any eq 554
+ permit tcp any any eq 8554
+ip access-list extended APPNAV-ACL-class-default
+ permit tcp any any
+ip access-list extended APPNAV-ACL-epmap
+ permit tcp any any eq msrpc
+ip access-list extended ONLY_VPN
+ permit udp any any eq isakmp
+ permit udp any any eq non500-isakmp
+ permit esp any any
+ permit icmp any any
+ permit ip host 141.130.250.10 any
+ip access-list extended QOS_CTERA
+ permit ip host 172.24.93.6 any
+ permit ip any host 172.24.93.6
+ip access-list extended QOS_EXCHANGE
+ permit tcp any eq smtp 587 any
+ permit tcp any any eq smtp 587
+ip access-list extended QOS_FMC
+ permit tcp any any eq 45000
+ permit tcp any eq 45000 any
+ permit tcp any any eq 46000
+ permit tcp any eq 46000 any
+ permit tcp host 10.24.14.104 range 3298 3299 any
+ permit tcp host 10.24.14.105 range 3298 3299 any
+ permit tcp host 10.1.3.244 any range 3000 3200
+ permit tcp any host 10.24.14.104 range 3298 3299
+ permit tcp any host 10.24.14.105 range 3298 3299
+ permit tcp any range 3000 3200 host 10.1.3.244
+ permit tcp any range 3000 3200 host 10.11.2.51
+ permit tcp any range 3000 3200 host 10.11.2.50
+ permit tcp any range 3000 3200 host 10.11.2.73
+ permit tcp any range 3000 3200 host 10.11.2.98
+ permit tcp any range 3000 3200 host 10.11.3.22
+ permit tcp any range 3000 3200 host 10.11.2.33
+ permit tcp any any eq 60000
+ permit tcp any eq 60000 any
+ permit ip host 10.24.254.10 any
+ permit ip any host 10.24.254.10
+ permit ip host 172.18.8.4 any
+ permit ip any host 172.18.8.4
+ip access-list extended QOS_OUTLOOK
+ permit tcp host 10.24.14.161 any
+ permit tcp host 172.18.18.40 any
+ permit tcp any host 10.24.14.161
+ permit tcp any host 172.18.18.40
+ permit ip host 10.24.254.8 any
+ permit ip any host 10.24.254.8
+ip access-list extended QOS_VIDEO
+ip access-list extended QOS_VIDEO_LOCAL
+ip access-list extended QOS_VOIP
+ permit udp any any eq 6000 9299
+ permit udp any eq 6000 9299 any
+ permit tcp any any eq 10430
+ permit tcp any eq 10430 any
+ permit tcp any any eq 10499
+ permit tcp any eq 10499 any
+ permit udp any any eq 3478
+ permit udp any eq 3478 any
+ permit udp any any eq 3479
+ permit udp any eq 3479 any
+ permit udp any eq 3481 any
+ permit udp any any eq 3481
+ permit udp any eq 3482 any
+ permit udp any any eq 3482
+ permit udp any range 5350 5390 any range 5350 5390
+ permit udp any range 49152 59999 any range 49152 59999
+ permit udp any range 5350 5390 any range 49152 59999
+ permit udp any range 49152 59999 any range 5350 5390
+ permit udp any range 5350 5390 any range 7004 7163
+ permit udp any range 7004 7163 any range 5350 5390
+ permit tcp any any range 5060 5067
+ permit tcp any range 5060 5067 any
+ permit udp any any range 5060 5067
+ permit udp any range 5060 5067 any
+ permit ip host 10.11.5.155 any
+ permit ip any host 10.11.5.155
+ permit ip host 10.11.5.183 any
+ permit ip any host 10.11.5.183
+ permit ip host 10.11.2.226 any
+ permit ip any host 10.11.2.226
+ permit ip host 10.11.2.227 any
+ permit ip any host 10.11.2.227
+ permit ip host 10.24.254.11 any
+ permit ip any host 10.24.254.11
+ip access-list extended QOS_VOIP_LOCAL
+logging host 10.24.2.26
+access-list 10 permit 172.21.96.0 0.0.31.255
+access-list 99 permit 10.24.100.101
+access-list 99 permit 10.100.239.169
+access-list 99 permit 141.130.250.10
+access-list 99 permit 10.24.2.0 0.0.1.255
+access-list 199 permit tcp 10.0.0.0 0.255.255.255 any eq telnet
+access-list 199 permit tcp 141.130.0.0 0.0.255.255 any eq telnet
+access-list 199 permit tcp 172.16.0.0 0.15.255.255 any eq telnet
+access-list 199 permit tcp 10.0.0.0 0.255.255.255 any eq 22
+access-list 199 permit tcp 141.130.0.0 0.0.255.255 any eq 22
+access-list 199 permit tcp 172.16.0.0 0.15.255.255 any eq 22
+access-list 199 deny   tcp any any
+!
+!
+snmp-server group READ v3 auth read Festo access 99
+snmp-server group READ v3 auth context vlan- match prefix 
+snmp-server group WRITE v3 auth write Festo access 99
+snmp-server group WRITE v3 auth context vlan- match prefix 
+snmp-server view Festo iso included
+snmp-server view Festo internet included
+snmp-server view Festo snmpUsmMIB excluded
+snmp-server view Festo snmpVacmMIB excluded
+snmp-server view Festo snmpCommunityMIB excluded
+snmp-server view Festo ciscoMgmt.252 excluded
+snmp-server community hefe5 RW 99
+snmp-server community franzi8 RO 99
+snmp-server location Festo:CN:Suncun:B1:0:South:GPC
+snmp-server enable traps tty
+snmp-server enable traps config
+snmp-server host 10.24.2.201 hefe5 
+snmp-server host 172.19.10.211 hefe5 
+snmp ifmib ifindex persist
+snmp mib persist cbqos
+tacacs-server key 7 121F000406040D03
+tacacs server NDEACS01
+ address ipv4 10.24.2.11
+ key 7 011503174F040708
+tacacs server NDEACS02
+ address ipv4 10.24.2.12
+ key 7 011503174F040708
+!
+!
+!
+!
+control-plane
+!
+banner motd 
+********************************************************************************
+* WARNING !!!!!                                                                *
+* This system is solely for the use of authorized users for official purpose.  *
+* You have no expectation of of privacy in its use and to ensure that the      *
+* system is functioning properly, individuals using this computer system are   *
+* subject to having all of their activities monitored and recorded by system   *
+* personnel. Use of this system evidences an express consent to such monitoring*
+* and agreement that if such monitoring reveals evidences of possible abuse or *
+* criminal activity, system personnel may provide the results of such          *
+* monitoring to appropriate officials.                                         *
+*                                                                              *
+*     Device name :  $(hostname).$(domain)
+*                                                                              *
+********************************************************************************
+
+!
+line con 0
+ exec-timeout 15 0
+ password 7 06520C225C6E0F1C16031D
+ login authentication linecon
+ transport input none
+ stopbits 1
+line aux 0
+ stopbits 1
+line vty 0 4
+ access-class 199 in vrf-also
+ exec-timeout 15 0
+ password 7 101A0A1A1537140E1F1025
+ login authentication linevty
+ transport input telnet ssh
+line vty 5 15
+ access-class 199 in vrf-also
+ exec-timeout 15 0
+ password 7 135114111B2C022F383027
+ login authentication linevty
+ transport input telnet ssh
+!
+ntp access-group peer 99
+ntp server 10.100.239.169
+ntp server 10.24.100.101
+!
+!
+!
+!
+!
+!
+pnp profile pnp-zero-touch
+end
