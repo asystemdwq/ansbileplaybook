@@ -2,12 +2,12 @@
   connection: local
   gather_facts: false
 
-  tasks:
+  task:
           - name: get base information
-          ios_command: 
-          commands: 
-          - show version | include IOS 
-          - show ip interface brief 
-          register: output 
- - debug: var=output.stdout_lines
+            ios_command:
+            commands:
+                    - show version | include IOS
+                    - show ip interface brief
+            register: output
 
+         - debug: var=output.stdout_lines
